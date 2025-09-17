@@ -6,28 +6,28 @@
   <img src="https://img.shields.io/badge/LaTeX-3D6117?style=for-the-badge&logo=latex&logoColor=white" alt="LaTeX">
 </p>
 
-O **SmartAspas** é um pacote LaTeX criado para automatizar o uso de aspas tipográficas.  
-Com ele, você pode escrever `"assim 'aninhado' aqui"` e o pacote converte para **“aspas curvas”** e **‘aspas simples’** corretas, de acordo com o idioma.  
+O **SmartAspas** é um pacote LaTeX que automatiza o uso de aspas tipográficas.  
+Em vez de escrever manualmente ``'' ou `\enquote{}`, basta digitar `"assim 'aninhado' aqui"` e o pacote converte automaticamente para **“aspas curvas”** e **‘aspas simples’**, respeitando o idioma do documento.
 
 ---
 
 ## ✨ Funcionalidades
 
 - **Aspas Automáticas**: converte `"` em aspas tipográficas.  
-- **Suporte Multilíngue**: português, inglês, francês (ou autodetecção via `babel`/`polyglossia`).  
-- **Aninhamento Correto**: suporte a aspas secundárias dentro das primárias.  
-- **Controle Local**: ambientes `smartaspasoff` e `smartaspason` para ligar/desligar dentro de blocos.  
-- **Compatibilidade**: integração com [`csquotes`](https://ctan.org/pkg/csquotes), respeitando ambientes verbatim/listings.  
-- **Configuração Flexível**: opções como `language=`, `outerquote=`, `nested=` e `safeenv=`.  
+- **Suporte Multilíngue**: português, inglês e francês (ou autodetecção via `babel`/`polyglossia`).  
+- **Aninhamento Correto**: aspas secundárias dentro das primárias.  
+- **Controle Local**: ambientes `smartaspasoff` e `smartaspason` desligam/ligam dentro de blocos sem vazar estado.  
+- **Compatibilidade**: integra-se ao [`csquotes`](https://ctan.org/pkg/csquotes), respeitando ambientes `verbatim`/`listings`.  
+- **Configuração Flexível**: opções como `language=`, `activate=`, `nested=` e `safeenv=`.  
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
 - **LaTeX2e**  
-- **csquotes** (dependência principal)  
-- **kvoptions** (gerenciamento de opções)  
-- **etoolbox** (lógica condicional)  
+- **csquotes** (gestão de aspas e multilíngue)  
+- **kvoptions** (parsing de opções key=value)  
+- **etoolbox** (condições e lógica extra)  
 - **babel/polyglossia** (opcional, para autodetecção de idioma)  
 
 ---
@@ -36,13 +36,13 @@ Com ele, você pode escrever `"assim 'aninhado' aqui"` e o pacote converte para 
 
 ### Pré-requisitos
 - Uma distribuição LaTeX (TeX Live, MikTeX etc.)
-- Pacote `csquotes` instalado (já incluso nas distribuições completas)
+- Pacote `csquotes` instalado (vem em distribuições completas)
 
 ### Instalação
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/Boudenzin/SmartAspas.git
+   git clone https://github.com/seu-usuario/latex-smartaspas.git
 
 2. No documento `.tex`, adicione:
 
@@ -66,9 +66,9 @@ As opções são passadas no `\usepackage{smartaspas}`:
 * `language=auto|brazil|english|french`
 
   * Padrão: `auto` (usa `babel`/`polyglossia` se carregado; fallback = inglês).
-* `outerquote=true|false`
+* `activate=true|false`
 
-  * Define se `"` vira atalho automático. Padrão: `true`.
+  * Define se o caractere `"` vira atalho automático. Padrão: `true`.
 * `nested=true|false`
 
   * Define se aspas secundárias são ativadas. Padrão: `true`.
@@ -80,7 +80,7 @@ As opções são passadas no `\usepackage{smartaspas}`:
 ### Exemplo:
 
 ```latex
-\usepackage[language=auto,outerquote=true,nested=true,safeenv={minted}]{smartaspas}
+\usepackage[language=auto,activate=true,nested=true,safeenv={minted}]{smartaspas}
 ```
 
 ---
@@ -102,7 +102,7 @@ latex-smartaspas/
 
 ## 📝 Exemplos de Uso
 
-### Texto normal
+### Texto em português
 
 ```latex
 "Aspas automáticas 'funcionando' em português"
@@ -122,7 +122,7 @@ latex-smartaspas/
 "Texte avec 'guillemets français'"
 ```
 
-### Controle local
+### Controle local (não vaza estado)
 
 ```latex
 \begin{smartaspasoff}
@@ -132,11 +132,39 @@ Aqui "as aspas" voltam a ser literais.
 
 ---
 
+## 🛡️ Solução de Problemas
+
+* **Ambientes de código (listings, minted, verbatim):**
+  O `csquotes` já desativa aspas nesses ambientes. Se usar outros pacotes, adicione-os em `safeenv`:
+
+  ```latex
+  \usepackage[safeenv={minted}]{smartaspas}
+  ```
+
+* **Math mode:**
+  Se precisar de aspas em expressões matemáticas, use `\text{“…”}` com `amsmath`.
+
+* **Conflitos com pacotes que usam `"` (TikZ, JSON inline, etc.):**
+  Use `\smartaspasOff` antes do trecho e `\smartaspasOn` depois, ou envolva em:
+
+  ```latex
+  \begin{smartaspasoff}
+  código "literal"
+  \end{smartaspasoff}
+  ```
+
+* **Motores:**
+
+  * pdfLaTeX → use `\usepackage[T1]{fontenc}` e `\usepackage[utf8]{inputenc}`.
+  * XeLaTeX/LuaLaTeX → Unicode nativo, aspas “funcionam direto”.
+
+---
+
 ## 🔮 Próximos Objetivos
 
-1. Suporte nativo a mais idiomas europeus.
-2. Testes adicionais com pacotes como `minted` e `tcolorbox`.
-3. Publicar no CTAN como pacote oficial.
+1. Suporte nativo a mais idiomas (alemão, espanhol).
+2. Presets de `safeenv` para `listings` e `minted`.
+3. Publicação no CTAN como pacote oficial.
 
 ---
 
@@ -150,6 +178,3 @@ Abra uma **issue** no repositório! Sua contribuição é muito bem-vinda.
 ## 📜 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-
-
