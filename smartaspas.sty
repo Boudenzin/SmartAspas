@@ -1,52 +1,131 @@
-% smartaspas.sty
+% smartaspas.sty (v1.1)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{smartaspas}[2025/09/16 v1.0 Aspas automáticas]
-%
-% Requer csquotes: cuida da tipografia por idioma e evita conflitos
-\RequirePackage{csquotes}
+\ProvidesPackage{smartaspas}[2025/09/17 v1.1 Aspas automáticas robustas]
 
-% ===== Opções do pacote =====
-% estilos: brazil (padrão), english, french
-\newif\ifsa@brazil \sa@braziltrue
-\newif\ifsa@english
-\newif\ifsa@french
-\DeclareOption{brazil}{\sa@braziltrue \sa@englishfalse \sa@frenchfalse}
-\DeclareOption{english}{\sa@brazilfalse \sa@englishtrue \sa@frenchfalse}
-\DeclareOption{french}{\sa@brazilfalse \sa@englishfalse \sa@frenchtrue}
-\ProcessOptions\relax
+% Dependências
+\RequirePackage{kvoptions}  % opções estilo key=value
+\RequirePackage{etoolbox}   % lógicas e ifs
+\RequirePackage{csquotes}   % aspas tipográficas e multilíngue
 
-% ===== Configuração das aspas por estilo =====
-\AtBeginDocument{%
-  \ifsa@brazil
-    % Brasil: “…” e ‘…’
-    \MakeAutoQuote{“}{”}%
-    \MakeAutoQuote*{‘}{’}%
-  \fi
-  \ifsa@english
-    % Inglês: “…” e ‘…’
-    \MakeAutoQuote{“}{”}%
-    \MakeAutoQuote*{‘}{’}%
-  \fi
-  \ifsa@french
-    % Francês: « … » e ‹ … › com espaços finos (csquotes cuida)
-    \MakeAutoQuote{«}{»}%
-    \MakeAutoQuote*{‹}{›}%
-  \fi
+% ===== Opções =====
+\SetupKeyvalOptions{
+  family=smartaspas,
+  prefix=sa@
+}
+\DeclareStringOption[auto]{language}   % auto|brazil|english|french
+\DeclareBoolOption[true]{outerquote}   % ativa " como atalho
+\DeclareBoolOption[true]{nested}       % ativa aspas secundárias
+\DeclareStringOption[]{safeenv}        % lista separada por vírgulas (extra)
+\ProcessKeyvalOptions*                 % processa as opções
 
-  % Torna o caractere " externo em smart quote (fora de verbatim/listings)
-  \MakeOuterQuote{"}%
-
-  % Opcional: ativa por padrão (pode desativar com \DisableQuotes)
-  \EnableQuotes
+% ===== Detecção de idioma =====
+% Função para aplicar o estilo de aspas conforme a linguagem pretendida
+\newcommand*\sa@applylanguage[1]{%
+  \edef\sa@lang{#1}%
+  \csundef{sa@done}%
+  % brazil/portuguese
+  \ifdefstring{\sa@lang}{brazil}{%
+    \SetAutoQuote{“}{”}%
+    \ifsa@nested\SetBlockQuote{‘}{’}\fi
+    \def\sa@done{1}%
+  }{}%
+  \ifdefstring{\sa@lang}{portuguese}{%
+    \SetAutoQuote{“}{”}%
+    \ifsa@nested\SetBlockQuote{‘}{’}\fi
+    \def\sa@done{1}%
+  }{}%
+  % english
+  \ifdefstring{\sa@lang}{english}{%
+    \SetAutoQuote{“}{”}%
+    \ifsa@nested\SetBlockQuote{‘}{’}\fi
+    \def\sa@done{1}%
+  }{}%
+  % french
+  \ifdefstring{\sa@lang}{french}{%
+    \SetAutoQuote{«}{»}%
+    \ifsa@nested\SetBlockQuote{‹}{›}\fi
+    \def\sa@done{1}%
+  }{}%
+  \ifcsundef{sa@done}{%
+    \PackageWarning{smartaspas}{Idioma '#1' nao reconhecido; usando english como fallback}%
+    \SetAutoQuote{“}{”}%
+    \ifsa@nested\SetBlockQuote{‘}{’}\fi
+  }{}%
 }
 
-% ===== Comandos úteis =====
-% Alternar manualmente se precisar
+% ===== Autodetectar via babel/polyglossia se language=auto =====
+\AtBeginDocument{%
+  \edef\sa@langopt{\sa@language}%
+  \ifdefstring{\sa@langopt}{auto}{%
+    % tenta detectar babel/polyglossia
+    \@ifpackageloaded{babel}{%
+      % usa \languagename quando disponível
+      \edef\sa@babelname{\languagename}%
+      % mapeamento simples
+      \edef\sa@guess{%
+        \ifdefstring{\sa@babelname}{brazil}{brazil}{%
+        \ifdefstring{\sa@babelname}{portuguese}{brazil}{%
+        \ifdefstring{\sa@babelname}{english}{english}{%
+        \ifdefstring{\sa@babelname}{french}{french}{english}}}}}%
+      \sa@applylanguage{\sa@guess}%
+    }{%
+      \@ifpackageloaded{polyglossia}{%
+        % polyglossia: \languagename tbm existe
+        \edef\sa@polyname{\languagename}%
+        \edef\sa@guess{%
+          \ifdefstring{\sa@polyname}{brazil}{brazil}{%
+          \ifdefstring{\sa@polyname}{portuguese}{brazil}{%
+          \ifdefstring{\sa@polyname}{english}{english}{%
+          \ifdefstring{\sa@polyname}{french}{french}{english}}}}}%
+        \sa@applylanguage{\sa@guess}%
+      }{%
+        % sem babel/polyglossia: usa english como fallback
+        \sa@applylanguage{english}%
+        \PackageWarning{smartaspas}{Nenhum pacote de idioma detectado; usando english como padrao}%
+      }%
+    }%
+  }{%
+    % language especificado explicitamente
+    \sa@applylanguage{\sa@langopt}%
+  }%
+
+  % Outer quote opcional
+  \ifsa@outerquote
+    \MakeOuterQuote{"}%
+    \EnableQuotes
+  \fi
+
+  % Opcional: ambientes extras para desativar (além do que csquotes ja faz)
+  % Usuario pode passar safeenv={minted,tcolorboxlisting}
+  \ifdefempty{\sa@safeenv}{}{%
+    \forcsvlist{\sa@DisableQuotesIn}{\sa@safeenv}%
+  }%
+}
+
+% Desativar quotes em ambientes nomeados
+\newcommand*\sa@DisableQuotesIn[1]{%
+  \AtBeginEnvironment{#1}{\DisableQuotes}%
+  \AtEndEnvironment{#1}{\EnableQuotes}%
+}
+
+% ===== API pública =====
 \newcommand{\smartaspasOn}{\EnableQuotes}
 \newcommand{\smartaspasOff}{\DisableQuotes}
 
-% Aspas explícitas (útil em casos pontuais)
+% Ambientes utilitários
+\newenvironment{smartaspasoff}{\DisableQuotes}{\EnableQuotes}
+\newenvironment{smartaspason}{\EnableQuotes}{\DisableQuotes}
+
+% Aspas explícitas
 \newcommand{\aspas}[1]{\enquote{#1}}
 \newcommand{\aspasSimples}[1]{\textquote{#1}}
 
-% Fim do pacote
+% ===== Setup dinâmico =====
+% Ex: \SmartAspasSetup{language=french, outerquote=false}
+\newcommand{\SmartAspasSetup}[1]{%
+  \setkeys{smartaspas}{#1}%
+  % Reaplica linguagem se mudar
+  \sa@applylanguage{\sa@language}%
+  % Reconfigura outerquote
+  \ifsa@outerquote\EnableQuotes\else\DisableQuotes\fi
+}
