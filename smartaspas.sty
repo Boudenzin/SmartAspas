@@ -1,131 +1,124 @@
-% smartaspas.sty (v1.1)
+% smartaspas.sty (v1.2.1)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{smartaspas}[2025/09/17 v1.1 Aspas automáticas robustas]
+\ProvidesPackage{smartaspas}[2025/09/17 v1.2.1 Aspas automáticas robustas]
 
 % Dependências
-\RequirePackage{kvoptions}  % opções estilo key=value
-\RequirePackage{etoolbox}   % lógicas e ifs
-\RequirePackage{csquotes}   % aspas tipográficas e multilíngue
+\RequirePackage{kvoptions}
+\RequirePackage{etoolbox}
+\RequirePackage{csquotes}
 
 % ===== Opções =====
 \SetupKeyvalOptions{
   family=smartaspas,
   prefix=sa@
 }
-\DeclareStringOption[auto]{language}   % auto|brazil|english|french
-\DeclareBoolOption[true]{outerquote}   % ativa " como atalho
-\DeclareBoolOption[true]{nested}       % ativa aspas secundárias
-\DeclareStringOption[]{safeenv}        % lista separada por vírgulas (extra)
-\ProcessKeyvalOptions*                 % processa as opções
+\DeclareStringOption[auto]{language}
+\DeclareBoolOption[true]{activate}  % ativa \MakeOuterQuote + \EnableQuotes
+\DeclareBoolOption[true]{nested}    % ativa aspas secundárias
+\DeclareStringOption[]{safeenv}     % lista csv de ambientes "seguros"
+\ProcessKeyvalOptions*
 
-% ===== Detecção de idioma =====
-% Função para aplicar o estilo de aspas conforme a linguagem pretendida
+% ===== Lógica central =====
+
+% Aplica o estilo de aspas conforme a linguagem
 \newcommand*\sa@applylanguage[1]{%
-  \edef\sa@lang{#1}%
-  \csundef{sa@done}%
-  % brazil/portuguese
-  \ifdefstring{\sa@lang}{brazil}{%
-    \SetAutoQuote{“}{”}%
-    \ifsa@nested\SetBlockQuote{‘}{’}\fi
-    \def\sa@done{1}%
-  }{}%
-  \ifdefstring{\sa@lang}{portuguese}{%
-    \SetAutoQuote{“}{”}%
-    \ifsa@nested\SetBlockQuote{‘}{’}\fi
-    \def\sa@done{1}%
-  }{}%
-  % english
-  \ifdefstring{\sa@lang}{english}{%
-    \SetAutoQuote{“}{”}%
-    \ifsa@nested\SetBlockQuote{‘}{’}\fi
-    \def\sa@done{1}%
-  }{}%
-  % french
-  \ifdefstring{\sa@lang}{french}{%
-    \SetAutoQuote{«}{»}%
-    \ifsa@nested\SetBlockQuote{‹}{›}\fi
-    \def\sa@done{1}%
-  }{}%
-  \ifcsundef{sa@done}{%
-    \PackageWarning{smartaspas}{Idioma '#1' nao reconhecido; usando english como fallback}%
-    \SetAutoQuote{“}{”}%
-    \ifsa@nested\SetBlockQuote{‘}{’}\fi
-  }{}%
+  % normaliza alguns aliases comuns
+  \def\sa@lang{#1}%
+  \ifdefstring{\sa@lang}{portuguese}{\def\sa@lang{brazil}}{}%
+  %
+  \ifstrequal{\sa@lang}{brazil}{%
+    \MakeAutoQuote{“}{”}%
+    \ifsa@nested\MakeAutoQuote*{‘}{’}\fi
+  }{%
+    \ifstrequal{\sa@lang}{french}{%
+      % Se preferir deixar o espaçamento ao babel/polyglossia, use só «» e ‹›:
+      \MakeAutoQuote{«}{»}%
+      \ifsa@nested\MakeAutoQuote*{‹}{›}\fi
+    }{%
+      % english (fallback)
+      \ifstrequal{\sa@lang}{english}{}{%
+        \PackageWarning{smartaspas}{Idioma '\sa@lang' nao reconhecido; usando 'english' como fallback}%
+      }%
+      \MakeAutoQuote{“}{”}%
+      \ifsa@nested\MakeAutoQuote*{‘}{’}\fi
+    }%
+  }%
 }
 
-% ===== Autodetectar via babel/polyglossia se language=auto =====
-\AtBeginDocument{%
-  \edef\sa@langopt{\sa@language}%
-  \ifdefstring{\sa@langopt}{auto}{%
-    % tenta detectar babel/polyglossia
-    \@ifpackageloaded{babel}{%
-      % usa \languagename quando disponível
-      \edef\sa@babelname{\languagename}%
-      % mapeamento simples
-      \edef\sa@guess{%
-        \ifdefstring{\sa@babelname}{brazil}{brazil}{%
-        \ifdefstring{\sa@babelname}{portuguese}{brazil}{%
-        \ifdefstring{\sa@babelname}{english}{english}{%
-        \ifdefstring{\sa@babelname}{french}{french}{english}}}}}%
-      \sa@applylanguage{\sa@guess}%
-    }{%
-      \@ifpackageloaded{polyglossia}{%
-        % polyglossia: \languagename tbm existe
-        \edef\sa@polyname{\languagename}%
-        \edef\sa@guess{%
-          \ifdefstring{\sa@polyname}{brazil}{brazil}{%
-          \ifdefstring{\sa@polyname}{portuguese}{brazil}{%
-          \ifdefstring{\sa@polyname}{english}{english}{%
-          \ifdefstring{\sa@polyname}{french}{french}{english}}}}}%
-        \sa@applylanguage{\sa@guess}%
-      }{%
-        % sem babel/polyglossia: usa english como fallback
-        \sa@applylanguage{english}%
-        \PackageWarning{smartaspas}{Nenhum pacote de idioma detectado; usando english como padrao}%
-      }%
-    }%
-  }{%
-    % language especificado explicitamente
-    \sa@applylanguage{\sa@langopt}%
-  }%
-
-  % Outer quote opcional
-  \ifsa@outerquote
+% Ativa/desativa sistema de aspas automáticas
+\newcommand*\sa@configureactivate{%
+  \ifsa@activate
     \MakeOuterQuote{"}%
     \EnableQuotes
+  \else
+    \DisableQuotes
+    % Nao tentar "restaurar" catcode do " aqui: evite mexer em catcodes dinamicamente.
   \fi
-
-  % Opcional: ambientes extras para desativar (além do que csquotes ja faz)
-  % Usuario pode passar safeenv={minted,tcolorboxlisting}
-  \ifdefempty{\sa@safeenv}{}{%
-    \forcsvlist{\sa@DisableQuotesIn}{\sa@safeenv}%
-  }%
 }
 
-% Desativar quotes em ambientes nomeados
+% Desativar quotes em ambientes nomeados (além do que csquotes já trata)
 \newcommand*\sa@DisableQuotesIn[1]{%
   \AtBeginEnvironment{#1}{\DisableQuotes}%
   \AtEndEnvironment{#1}{\EnableQuotes}%
 }
 
+% ===== Hooks e Configuração Inicial =====
+\makeatletter
+\AtBeginDocument{%
+  % 1) Determina o idioma
+  \ifdefstring{\sa@language}{auto}{%
+    \@ifpackageloaded{babel}{%
+      % mapeia \languagename de forma simples
+      \edef\sa@guess{english}%
+      \ifstrequal{\languagename}{brazil}{\edef\sa@guess{brazil}}{}%
+      \ifstrequal{\languagename}{portuguese}{\edef\sa@guess{brazil}}{}%
+      \ifstrequal{\languagename}{french}{\edef\sa@guess{french}}{}%
+      \sa@applylanguage{\sa@guess}%
+    }{%
+      \@ifpackageloaded{polyglossia}{%
+        \edef\sa@guess{english}%
+        \ifstrequal{\languagename}{brazil}{\edef\sa@guess{brazil}}{}%
+        \ifstrequal{\languagename}{portuguese}{\edef\sa@guess{brazil}}{}%
+        \ifstrequal{\languagename}{french}{\edef\sa@guess{french}}{}%
+        \sa@applylanguage{\sa@guess}%
+      }{%
+        \PackageWarning{smartaspas}{Nenhum pacote de idioma detectado e language=auto; usando 'english' como padrao}%
+        \sa@applylanguage{english}%
+      }%
+    }%
+  }{%
+    \sa@applylanguage{\sa@language}%
+  }%
+
+  % 2) Ativa " como atalho se pedido
+  \sa@configureactivate
+
+  % 3) Ambientes seguros adicionais
+  \ifdefempty{\sa@safeenv}{}{%
+    \forcsvlist{\sa@DisableQuotesIn}{\sa@safeenv}%
+  }%
+}
+\makeatother
+
 % ===== API pública =====
+
+% Liga/desliga globalmente (respeita Activate ligado)
 \newcommand{\smartaspasOn}{\EnableQuotes}
 \newcommand{\smartaspasOff}{\DisableQuotes}
 
-% Ambientes utilitários
-\newenvironment{smartaspasoff}{\DisableQuotes}{\EnableQuotes}
-\newenvironment{smartaspason}{\EnableQuotes}{\DisableQuotes}
+% Ambientes locais (nao vazam estado)
+\newenvironment{smartaspasoff}{\begingroup\DisableQuotes}{\endgroup}
+\newenvironment{smartaspason}{\begingroup\EnableQuotes}{\endgroup}
 
 % Aspas explícitas
 \newcommand{\aspas}[1]{\enquote{#1}}
 \newcommand{\aspasSimples}[1]{\textquote{#1}}
 
-% ===== Setup dinâmico =====
-% Ex: \SmartAspasSetup{language=french, outerquote=false}
+% Reconfiguração dinâmica
 \newcommand{\SmartAspasSetup}[1]{%
   \setkeys{smartaspas}{#1}%
-  % Reaplica linguagem se mudar
   \sa@applylanguage{\sa@language}%
-  % Reconfigura outerquote
-  \ifsa@outerquote\EnableQuotes\else\DisableQuotes\fi
+  \sa@configureactivate
 }
+
+\endinput
