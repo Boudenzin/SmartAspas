@@ -1,0 +1,52 @@
+% smartaspas.sty
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{smartaspas}[2025/09/16 v1.0 Aspas automáticas]
+%
+% Requer csquotes: cuida da tipografia por idioma e evita conflitos
+\RequirePackage{csquotes}
+
+% ===== Opções do pacote =====
+% estilos: brazil (padrão), english, french
+\newif\ifsa@brazil \sa@braziltrue
+\newif\ifsa@english
+\newif\ifsa@french
+\DeclareOption{brazil}{\sa@braziltrue \sa@englishfalse \sa@frenchfalse}
+\DeclareOption{english}{\sa@brazilfalse \sa@englishtrue \sa@frenchfalse}
+\DeclareOption{french}{\sa@brazilfalse \sa@englishfalse \sa@frenchtrue}
+\ProcessOptions\relax
+
+% ===== Configuração das aspas por estilo =====
+\AtBeginDocument{%
+  \ifsa@brazil
+    % Brasil: “…” e ‘…’
+    \MakeAutoQuote{“}{”}%
+    \MakeAutoQuote*{‘}{’}%
+  \fi
+  \ifsa@english
+    % Inglês: “…” e ‘…’
+    \MakeAutoQuote{“}{”}%
+    \MakeAutoQuote*{‘}{’}%
+  \fi
+  \ifsa@french
+    % Francês: « … » e ‹ … › com espaços finos (csquotes cuida)
+    \MakeAutoQuote{«}{»}%
+    \MakeAutoQuote*{‹}{›}%
+  \fi
+
+  % Torna o caractere " externo em smart quote (fora de verbatim/listings)
+  \MakeOuterQuote{"}%
+
+  % Opcional: ativa por padrão (pode desativar com \DisableQuotes)
+  \EnableQuotes
+}
+
+% ===== Comandos úteis =====
+% Alternar manualmente se precisar
+\newcommand{\smartaspasOn}{\EnableQuotes}
+\newcommand{\smartaspasOff}{\DisableQuotes}
+
+% Aspas explícitas (útil em casos pontuais)
+\newcommand{\aspas}[1]{\enquote{#1}}
+\newcommand{\aspasSimples}[1]{\textquote{#1}}
+
+% Fim do pacote
