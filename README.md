@@ -1,30 +1,24 @@
-<p align="center">
-  <img src="docs/logo.png" alt="SmartAspas Logo" width="200"/>
-</p>
-
 <h1 align="center">SmartAspas</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/github/repo-size/seu-usuario/latex-smartaspas?style=for-the-badge" alt="Tamanho do Repositório">
+  <img src="https://img.shields.io/github/repo-size/Boudenzin/SmartAspas?style=for-the-badge" alt="Tamanho do Repositório">
   <img src="https://img.shields.io/badge/LaTeX-3D6117?style=for-the-badge&logo=latex&logoColor=white" alt="LaTeX">
 </p>
 
 O **SmartAspas** é um pacote LaTeX criado para automatizar o uso de aspas tipográficas.  
-Em vez de digitar manualmente ``'' para abrir e fechar aspas, basta escrever `"assim"` que o pacote gera corretamente “aspas curvas” e permite também aninhamento (‘aspas simples’ dentro de “aspas duplas”).  
+Com ele, você pode escrever `"assim 'aninhado' aqui"` e o pacote converte para **“aspas curvas”** e **‘aspas simples’** corretas, de acordo com o idioma.  
 
 ---
 
 ## ✨ Funcionalidades
 
-- **Aspas Automáticas**: converte `"` em aspas tipográficas conforme o idioma.  
-- **Suporte a Idiomas**: português (padrão), inglês e francês.  
-- **Aninhamento Correto**: suporta aspas simples dentro de aspas duplas.  
-- **Compatibilidade**: funciona integrado ao [`csquotes`](https://ctan.org/pkg/csquotes), respeitando `babel` ou `polyglossia`.  
-- **Ativar/Desativar**: comandos `\smartaspasOn` e `\smartaspasOff` para alternar o recurso.  
-- **Comandos Extras**:  
-  - `\aspas{texto}` → gera aspas tipográficas manuais.  
-  - `\aspasSimples{texto}` → gera aspas simples explícitas.  
+- **Aspas Automáticas**: converte `"` em aspas tipográficas.  
+- **Suporte Multilíngue**: português, inglês, francês (ou autodetecção via `babel`/`polyglossia`).  
+- **Aninhamento Correto**: suporte a aspas secundárias dentro das primárias.  
+- **Controle Local**: ambientes `smartaspasoff` e `smartaspason` para ligar/desligar dentro de blocos.  
+- **Compatibilidade**: integração com [`csquotes`](https://ctan.org/pkg/csquotes), respeitando ambientes verbatim/listings.  
+- **Configuração Flexível**: opções como `language=`, `outerquote=`, `nested=` e `safeenv=`.  
 
 ---
 
@@ -32,27 +26,28 @@ Em vez de digitar manualmente ``'' para abrir e fechar aspas, basta escrever `"a
 
 - **LaTeX2e**  
 - **csquotes** (dependência principal)  
-- **babel/polyglossia** (para gerenciamento de idiomas)  
+- **kvoptions** (gerenciamento de opções)  
+- **etoolbox** (lógica condicional)  
+- **babel/polyglossia** (opcional, para autodetecção de idioma)  
 
 ---
 
 ## 🚀 Como Usar
 
 ### Pré-requisitos
-- Distribuição LaTeX (TeX Live, MikTeX, etc.)
-- Pacote `csquotes` disponível (já vem em distribuições completas).
+- Uma distribuição LaTeX (TeX Live, MikTeX etc.)
+- Pacote `csquotes` instalado (já incluso nas distribuições completas)
 
-### Passos
+### Instalação
 
 1. Clone o repositório:
    ```bash
    git clone https://github.com/Boudenzin/SmartAspas.git
 
-
 2. No documento `.tex`, adicione:
 
    ```latex
-   \usepackage[brazil]{babel} % ou english / french
+   \usepackage[brazil]{babel} % ou english, french...
    \usepackage{smartaspas}
    ```
 
@@ -62,7 +57,31 @@ Em vez de digitar manualmente ``'' para abrir e fechar aspas, basta escrever `"a
    "Aspas automáticas 'funcionando' aqui"
    ```
 
-4. Compile com `pdflatex`, `xelatex` ou `lualatex`.
+---
+
+## ⚙️ Opções do Pacote
+
+As opções são passadas no `\usepackage{smartaspas}`:
+
+* `language=auto|brazil|english|french`
+
+  * Padrão: `auto` (usa `babel`/`polyglossia` se carregado; fallback = inglês).
+* `outerquote=true|false`
+
+  * Define se `"` vira atalho automático. Padrão: `true`.
+* `nested=true|false`
+
+  * Define se aspas secundárias são ativadas. Padrão: `true`.
+* `safeenv={lista}`
+
+  * Lista de ambientes extras onde as aspas automáticas são desativadas.
+  * Exemplo: `safeenv={minted,tcolorboxlisting}`
+
+### Exemplo:
+
+```latex
+\usepackage[language=auto,outerquote=true,nested=true,safeenv={minted}]{smartaspas}
+```
 
 ---
 
@@ -81,18 +100,50 @@ latex-smartaspas/
 
 ---
 
+## 📝 Exemplos de Uso
+
+### Texto normal
+
+```latex
+"Aspas automáticas 'funcionando' em português"
+```
+
+### Inglês
+
+```latex
+\SmartAspasSetup{language=english}
+"Nested 'quotes' working fine"
+```
+
+### Francês
+
+```latex
+\SmartAspasSetup{language=french}
+"Texte avec 'guillemets français'"
+```
+
+### Controle local
+
+```latex
+\begin{smartaspasoff}
+Aqui "as aspas" voltam a ser literais.
+\end{smartaspasoff}
+```
+
+---
+
 ## 🔮 Próximos Objetivos
 
-1. Adicionar suporte a outros idiomas europeus.
-2. Testes mais extensivos com ambientes de código (listings, verbatim).
-3. Criar release no CTAN para distribuição oficial.
+1. Suporte nativo a mais idiomas europeus.
+2. Testes adicionais com pacotes como `minted` e `tcolorbox`.
+3. Publicar no CTAN como pacote oficial.
 
 ---
 
 ## 🐞 Issues
 
 Encontrou algum problema ou tem sugestões?
-Abra uma **issue** no repositório do projeto! Sua contribuição é muito bem-vinda.
+Abra uma **issue** no repositório! Sua contribuição é muito bem-vinda.
 
 ---
 
@@ -100,9 +151,5 @@ Abra uma **issue** no repositório do projeto! Sua contribuição é muito bem-v
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-```
 
----
 
-👉 Quer que eu também monte um `exemplo/main.tex` já pronto (com texto de teste em português, inglês e francês) para acompanhar esse README no repo?
-```
