@@ -1,0 +1,107 @@
+% exemplo/main.tex
+\documentclass[a4paper,12pt]{article}
+
+% --- Codificação recomendada para pdfLaTeX ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% --- Idioma principal do documento (pode trocar para english/french) ---
+\usepackage[brazil]{babel}
+
+% --- Nosso pacote (depende de csquotes e já lida com autodetecção) ---
+% Opções mostradas aqui apenas como exemplo; pode omitir e usar defaults
+\usepackage[language=auto,activate=true,nested=true,safeenv={listings}]{smartaspas}
+
+% --- Demais utilidades para o exemplo ---
+\usepackage{amsmath}   % para \text{} no modo matemático
+\usepackage{listings}  % para bloco de código sem ativar aspas automáticas
+\usepackage{lipsum}    % texto de exemplo (opcional)
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{Demonstração do \texttt{smartaspas}}
+\author{Exemplo}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Português (auto via \texttt{babel})}
+Escreva naturalmente: "Aspas automáticas 'com aninhamento' funcionando".
+Observe que o pacote converte para “aspas curvas” e ‘aspas simples’ conforme o idioma ativo.
+
+\medskip
+Você também pode usar os comandos explícitos do \texttt{csquotes}:
+\aspas{Aspas com \texttt{\textbackslash enquote} por baixo dos panos}.
+E a forma simples: \aspasSimples{aspas simples explícitas}.
+
+\section{Inglês (mudando em tempo de execução)}
+Troque o estilo em tempo de execução:
+\SmartAspasSetup{language=english}
+
+Agora escreva: "Nested 'quotes' working fine".
+% volta para português no fim do documento, se desejar:
+%\SmartAspasSetup{language=brazil}
+
+\section{Francês (guillemets)}
+Ative francês:
+\SmartAspasSetup{language=french}
+
+Digite normalmente: "Texte avec 'guillemets fran\c{c}ais' ici".
+% Nota: espaços finos ao redor de « » são tratados por babel/polyglossia quando ativos.
+
+% (Opcional) voltar ao pt-BR
+\SmartAspasSetup{language=brazil}
+
+\section{Controle local: ambientes}
+\subsection{\texttt{smartaspasoff}}
+Dentro deste ambiente, o caractere " volta a ser literal:
+\begin{smartaspasoff}
+Aqui "as aspas" n\~ao s\~ao convertidas.
+\end{smartaspasoff}
+
+\subsection{\texttt{smartaspason}}
+Força a ativa\c{c}\~ao local (\'util se foi desligado antes):
+\smartaspasOff % desliga globalmente só para demonstrar
+\begin{smartaspason}
+"Aqui volta a funcionar 'com aninhamento'."
+\end{smartaspason}
+% Saiu do ambiente: segue desligado globalmente
+\smartaspasOn  % liga de novo globalmente
+
+\section{Math mode}
+No modo matemático, use \verb|\text{…}| para tipografia de texto:
+\[
+f(x) = \text{“função com ‘aspas’ no texto”}.
+\]
+
+\section{Ambientes de c\'odigo}
+O \texttt{csquotes} já evita a conversão em ambientes verbatim/listings.
+\begin{verbatim}
+"Aspas" aqui ficam literais.
+'Sem' conversão automática.
+\end{verbatim}
+
+Exemplo com \texttt{listings}:
+\begin{lstlisting}[language=Java]
+String s = "valor";
+System.out.println("JSON: {\"k\": \"v\"}");
+\end{lstlisting}
+
+\section{Dicas r\'apidas}
+\begin{itemize}
+  \item Para documentos em pdfLaTeX, mantenha \verb|\usepackage[T1]{fontenc}| e \verb|\usepackage[utf8]{inputenc}|.
+  \item Em XeLaTeX/LuaLaTeX, você pode remover \verb|inputenc| (Unicode nativo).
+  \item Se algum pacote usar muito o caractere \verb|"| em chaves/opções (por exemplo, certas chaves do TikZ), rode esse trecho dentro de \verb|smartaspasoff|, ou faça:
+\begin{verbatim}
+\smartaspasOff
+% ... trecho sensível ...
+\smartaspasOn
+\end{verbatim}
+  \item Se usar ambientes adicionais de código, adicione em \verb|safeenv|:
+\begin{verbatim}
+\usepackage[safeenv={listings,tcolorboxlisting}]{smartaspas}
+\end{verbatim}
+\end{itemize}
+
+\end{document}
