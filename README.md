@@ -42,7 +42,7 @@ Em vez de escrever manualmente ``'' ou `\enquote{}`, basta digitar `"assim 'anin
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/latex-smartaspas.git
+   https://github.com/Boudenzin/SmartAspas.git
 
 2. No documento `.tex`, adicione:
 
