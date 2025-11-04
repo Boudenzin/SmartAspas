@@ -88,7 +88,7 @@ As opções são passadas no `\usepackage{smartaspas}`:
 ## 📂 Estrutura do Projeto
 
 ```
-latex-smartaspas/
+SmartAspas/
 ├── smartaspas.sty         # Arquivo principal do pacote
 ├── exemplo/
 │   └── main.tex           # Exemplo de uso do pacote
